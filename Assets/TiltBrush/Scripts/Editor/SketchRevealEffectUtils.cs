@@ -23,6 +23,13 @@ public class SketchRevealEffectUtils : Editor
         {
             sketchRevealEffectBase.totalSketchTime = sketchRevealEffectBase.CalculateTotalSketchTime();
         }
+
+        // this is useful if meshes are deleted, because the SketchRevealEffect methods won't work if the strokes list changes suddenly
+        // i.e. use this button if something isn't working
+        if (GUILayout.Button("Reinitialize Strokes array"))
+        {
+            sketchRevealEffectBase.UpdateStrokesArray();
+        }
     }
 
 }
