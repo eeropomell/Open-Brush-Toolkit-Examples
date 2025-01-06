@@ -25,6 +25,7 @@ public class SketchRevealEffect : MonoBehaviour
     private Coroutine CurrentEffectCoroutine;
 
     private float prevT;
+    [Tooltip("t = 0 sketch is 0% visible, t = .5 sketch is 50% visible, t = 1 sketch is 100% visible, etc. Note: this is only enabled in edit mode")]
     [Range(0, 1)] public float t;
 
     private static readonly int PropertyIdClipEnd = Shader.PropertyToID("_ClipEnd");
