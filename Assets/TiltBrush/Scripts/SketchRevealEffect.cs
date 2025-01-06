@@ -401,11 +401,7 @@ public class SketchRevealEffect : MonoBehaviour
         if (!Application.IsPlaying(gameObject))
         {
 
-       //     ShowVerticesRange(0,tempVertIndex);
-          //  HideVerticesRange(tempVertIndex+1,totalVertexCount-1);
-           // return;
-
-            if (false && isFirstFrame)
+            if (AreFloatsEqual(prevT,t) || isFirstFrame)
             {
                 prevT = t;
                 return;
