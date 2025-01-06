@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
-// all the sketches that are children of this GameObject,
+// when "E" is pressed, this script starts the sketch reveal effect for all the sketches that are children of this GameObject,
+// and the effect is constantly looping.
+//
 // there is a spatial sound source of the pencil sound
-// and it is always located at the nearest sketch
+// and this script always locates it at the nearest script
 public class SketchesSpatialSoundExample : MonoBehaviour
 {
 
