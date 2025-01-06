@@ -30,13 +30,14 @@ public class SketchesSpatialSoundExample : MonoBehaviour
     void Start()
     {
 
-        _sketchRevealEffects = GameObject.FindObjectsOfType<SketchRevealEffect>();
+        _sketchRevealEffects = GetComponentsInChildren<SketchRevealEffect>();
     }
 
     // Update is called once per frame
     void Update()
     {
 
+        // this piece of code makes it so that when the player is near the Example 1 area, they can press "E" to start the example
         if (!playEffect)
         {
             audioSource.volume = 0f;
@@ -54,6 +55,7 @@ public class SketchesSpatialSoundExample : MonoBehaviour
 
         audioSource.volume = 1f;
 
+        // at every frame we get the nearest sketch to the player, and position the audio source there
         SketchRevealEffect sketchRevealEffect = GetNearestSketch(player);
 
         // we need to change the position of the audiosource
@@ -72,6 +74,8 @@ public class SketchesSpatialSoundExample : MonoBehaviour
         }
     }
 
+    // this method calculates the nearest sketch by calculating the distance between the player and each sketch
+    // it returns the sketch with the shortest distance
     private SketchRevealEffect GetNearestSketch(Transform target)
     {
         float shortestDistSoFar = Vector3.Distance(_sketchRevealEffects[0].transform.position, target.position);
@@ -88,7 +92,6 @@ public class SketchesSpatialSoundExample : MonoBehaviour
 
         return _sketchRevealEffects[indexOfNearestTemp];
     }
-
 
 
     private bool IsInsideCubeXZ(Vector3 position, BoxCollider cubeCollider)
