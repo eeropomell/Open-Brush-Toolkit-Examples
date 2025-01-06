@@ -11,6 +11,7 @@ public class SketchRevealEffect : MonoBehaviour
 {
     [HideInInspector]
     public int totalVertexCount = 0;
+
     [SerializeField] private List<Stroke> allStrokes;
 
     private float sketchStartTime = 0f;
@@ -32,6 +33,7 @@ public class SketchRevealEffect : MonoBehaviour
     // setting _ClipEnd to this value makes the brush fragment shader discard all vertices
     private const float CLIPEND_HIDE_ALL_VALUE = .0001f;
 
+    [Serializable]
     public struct Stroke
     {
         public MeshFilter mf;
@@ -40,10 +42,33 @@ public class SketchRevealEffect : MonoBehaviour
 
     void Awake()
     {
-        allStrokes = new List<Stroke>();
-        List<MeshFilter> allMeshFilters = GetComponentsInChildren<MeshFilter>().ToList();
-        totalVertexCount = 0;
+
         totalSketchTime = 0f;
+        InitStrokesArray();
+
+        // totalSketchTime is in seconds
+        totalSketchTime = (GetSketchLastTimestamp() - GetSketchFirstTimestamp()) / 1000;
+        sketchStartTime = GetSketchFirstTimestamp();
+        sketchEndTime = GetSketchLastTimestamp();
+
+        prevT = -1f;
+    }
+
+    // called either from Awake or UpdateStrokesArray
+    void InitStrokesArray()
+    {
+        if (allStrokes != null && allStrokes.Count > 0)
+        {
+            allStrokes.Clear();
+        }
+        else
+        {
+            allStrokes = new List<Stroke>();
+        }
+
+        totalVertexCount = 0;
+
+        List<MeshFilter> allMeshFilters = GetComponentsInChildren<MeshFilter>().ToList();
         foreach (MeshFilter mf in allMeshFilters)
         {
             MeshRenderer meshRenderer = mf.GetComponent<MeshRenderer>();
@@ -64,13 +89,6 @@ public class SketchRevealEffect : MonoBehaviour
         }
 
         OrderStrokes();
-
-        // totalSketchTime is in seconds
-        totalSketchTime = (GetSketchLastTimestamp() - GetSketchFirstTimestamp()) / 1000;
-        sketchStartTime = GetSketchFirstTimestamp();
-        sketchEndTime = GetSketchLastTimestamp();
-
-        prevT = -1f;
     }
 
     public float CalculateTotalSketchTime()
@@ -153,7 +171,7 @@ public class SketchRevealEffect : MonoBehaviour
 
     public void UpdateStrokesArray()
     {
-        Awake();
+        InitStrokesArray();
     }
 
     public void ShowVerticesRange(int start, int end)
@@ -172,10 +190,30 @@ public class SketchRevealEffect : MonoBehaviour
         }
 
         int startStrokeLocalVertexIndex = GetLocalIndex(start);
+        int endStrokeLocalVertexIndex = GetLocalIndex(end);
 
         allStrokes[startStrokeIndex].mr.sharedMaterial.SetFloat(PropertyIdClipStart,startStrokeLocalVertexIndex);
+        allStrokes[endStrokeIndex].mr.sharedMaterial.SetFloat(PropertyIdClipEnd, endStrokeLocalVertexIndex);
 
+        // two cases:
+        // 1. vertices 'start' and 'end' belong to different stroke meshes
+        // 2. vertices 'start' and 'end' belong to the same stroke mesh
+        //
+        // in 1st case, we have to make sure that the starting stroke shows all of its vertices
+        // in 2nd case, we have to do SetFloat(ClipEnd,localEndIndex);
 
+        if (startStrokeIndex != endStrokeIndex)
+        {
+            allStrokes[endStrokeIndex].mr.sharedMaterial.SetFloat(PropertyIdClipStart, 0);
+            // this makes sure that the starting stroke is 100% visible
+            allStrokes[startStrokeIndex].mr.sharedMaterial.SetFloat(PropertyIdClipEnd, end);
+        }
+        else
+        {
+            allStrokes[startStrokeIndex].mr.sharedMaterial.SetFloat(PropertyIdClipEnd,startStrokeLocalVertexIndex);
+        }
+
+        // this loop handles the strokes between the starting and ending strokes we want to show
         for (int i = startStrokeIndex+1; i < endStrokeIndex; i++)
         {
             MeshFilter mf = allStrokes[i].mf;
@@ -184,16 +222,9 @@ public class SketchRevealEffect : MonoBehaviour
             material.SetFloat(PropertyIdClipStart, 0);
             material.SetFloat(PropertyIdClipEnd, mf.sharedMesh.vertexCount);
         }
-
-
-        int endStrokeLocalVertexIndex = GetLocalIndex(end);
-        if (startStrokeIndex != endStrokeIndex)
-        {
-            allStrokes[endStrokeIndex].mr.sharedMaterial.SetFloat(PropertyIdClipStart, 0);
-        }
-        allStrokes[endStrokeIndex].mr.sharedMaterial.SetFloat(PropertyIdClipEnd, endStrokeLocalVertexIndex);
     }
 
+    // logic is similar to ShowVerticesRange except it hides the strokes
     public void HideVerticesRange(int start, int end)
     {
         if (allStrokes == null || allStrokes.Count < 0)
@@ -356,6 +387,8 @@ public class SketchRevealEffect : MonoBehaviour
         CurrentEffectCoroutine = StartCoroutine(PlaySketchRevealEffectCoroutine(playInReverse));
     }
 
+    public int tempVertIndex;
+
     // Update is called once per frame
     void Update()
     {
@@ -368,7 +401,11 @@ public class SketchRevealEffect : MonoBehaviour
         if (!Application.IsPlaying(gameObject))
         {
 
-            if (AreFloatsEqual(t, prevT) || isFirstFrame)
+       //     ShowVerticesRange(0,tempVertIndex);
+          //  HideVerticesRange(tempVertIndex+1,totalVertexCount-1);
+           // return;
+
+            if (false && isFirstFrame)
             {
                 prevT = t;
                 return;
